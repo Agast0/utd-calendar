@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UTD Muslim Org Calendar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: org roster strip on top, month grid as the centerpiece, agenda list below; filters drive both. */
+:root{
+  --bg:#f3f5f1; --surface:#ffffff; --ink:#18241f; --muted:#5d6b64; --line:#d9e0da;
+  --accent:#1f5b4a; --accent-soft:#e2ede7; --gold:#b98a2e; --gold-soft:#f6ecd6; --today:#b98a2e;
+  --c-faith:#1f5b4a; --c-service:#2f6f9f; --c-pro:#7a4fa3; --c-culture:#b5532f; --c-advocacy:#8a3b3b; --c-greek:#3d6b2f; --c-community:#a3782a; --c-academic:#59636b;
+  --display:"Young Serif", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111815; --surface:#18211d; --ink:#e7eee9; --muted:#9aaaa2; --line:#2a3631;
+  --accent:#7cc3a6; --accent-soft:#1f2f28; --gold:#e0b45a; --gold-soft:#2f2717; --today:#e0b45a;
+  --c-faith:#7cc3a6; --c-service:#7fb4dc; --c-pro:#bb9ae0; --c-culture:#e8916c; --c-advocacy:#df8b8b; --c-greek:#9cc98a; --c-community:#e0b45a; --c-academic:#a9b3ba;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111815; --surface:#18211d; --ink:#e7eee9; --muted:#9aaaa2; --line:#2a3631;
+  --accent:#7cc3a6; --accent-soft:#1f2f28; --gold:#e0b45a; --gold-soft:#2f2717; --today:#e0b45a;
+  --c-faith:#7cc3a6; --c-service:#7fb4dc; --c-pro:#bb9ae0; --c-culture:#e8916c; --c-advocacy:#df8b8b; --c-greek:#9cc98a; --c-community:#e0b45a; --c-academic:#a9b3ba;
+  color-scheme:dark}
+*{box-sizing:border-box}img{max-width:100%}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.4vw,44px);line-height:1.1;margin:0;text-wrap:balance}
+h1 small{display:block;font-family:var(--body);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:6px}
+.meta{color:var(--muted);font-size:13px;max-width:52ch}
+h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
+.sechead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:14px}
+.sechead p{margin:0;color:var(--muted);font-size:13px}
+
+/* org roster */
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.org{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.org:hover{border-color:var(--accent)}
+.org:focus-visible,.chip:focus-visible,.ev:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.org[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.org.dim{opacity:.55}
+.logo{width:38px;height:38px;border-radius:50%;flex:none;object-fit:cover;background:var(--accent-soft);border:2px solid var(--cat,var(--line));display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--cat)}
+.org .txt{min-width:0;display:flex;flex-direction:column}
+.org .nm{font-weight:600;font-size:13px;line-height:1.25;overflow-wrap:anywhere}
+.org .hd{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.org .ct{font-family:var(--mono);font-size:11px;color:var(--accent)}
+.groups{display:flex;flex-direction:column;gap:18px}
+.grp h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600;display:flex;align-items:center;gap:8px}
+.grp h3 i{width:10px;height:10px;border-radius:50%;background:var(--cat);display:inline-block}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.filters .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-right:4px}
+
+/* month grid */
+.cal{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow div{padding:8px 10px;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.day{min-height:128px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.day:nth-child(7n){border-right:none}
+.day.out{background:var(--bg)}
+.day.past .n{color:var(--muted)}
+.day .n{font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.day.today .n b{background:var(--today);color:var(--bg);border-radius:6px;padding:0 6px}
+.day.brk{background:var(--gold-soft)}
+.brklbl{font-size:11px;color:var(--gold);font-weight:600}
+.ev{display:flex;gap:6px;align-items:flex-start;text-align:left;width:100%;border:none;background:color-mix(in srgb,var(--cat) 12%,var(--surface));border-left:3px solid var(--cat);border-radius:5px;padding:3px 5px;font:inherit;font-size:12px;line-height:1.25;color:var(--ink);cursor:pointer;min-width:0}
+.ev img,.ev .mini{width:16px;height:16px;border-radius:50%;flex:none;object-fit:cover;margin-top:1px}
+.ev span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.ev .t{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:block}
+.ev.flag{border-left-style:dashed}
+
+/* agenda */
+.agenda{display:flex;flex-direction:column;gap:22px}
+.aday h3{font-family:var(--display);font-weight:400;font-size:18px;margin:0 0 8px;display:flex;gap:10px;align-items:baseline}
+.aday h3 em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.row{display:grid;grid-template-columns:110px 40px minmax(0,1fr);gap:12px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.row .tm{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-top:8px;font-variant-numeric:tabular-nums}
+.row .logo{width:40px;height:40px}
+.row .ti{font-weight:600}
+.row .by{font-size:13px;color:var(--muted)}
+.row .wh{font-size:13px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tag{font-size:11px;border-radius:999px;padding:1px 8px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tag.warn{background:var(--gold-soft);color:var(--gold)}
+.row a{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none}
+.row a:hover{text-decoration:underline}
+.empty{color:var(--muted);padding:16px 0}
+
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);max-width:min(460px,calc(100vw - 32px));padding:0}
+dialog::backdrop{background:rgb(0 0 0 / .35)}
+.dlg{padding:20px;display:flex;flex-direction:column;gap:10px}
+.dlg .hdr{display:flex;gap:12px;align-items:center}
+.dlg .hdr .logo{width:48px;height:48px}
+.dlg h4{font-family:var(--display);font-weight:400;font-size:21px;margin:0;line-height:1.2}
+.dlg dl{display:grid;grid-template-columns:70px minmax(0,1fr);gap:4px 10px;margin:0;font-size:14px}
+.dlg dt{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;padding-top:2px}
+.dlg dd{margin:0}
+.dlg .acts{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px}
+.dlg a{color:var(--accent);font-weight:600;text-decoration:none}
+.btn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 14px;font:inherit;cursor:pointer}
+
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--gold);padding:4px 0 4px 12px;max-width:80ch}
+
+@media (max-width:760px){
+  .day{min-height:74px;padding:4px}
+  .ev span,.ev .t{display:none}
+  .ev{justify-content:center;padding:3px;border-left-width:0;border-bottom:3px solid var(--cat)}
+  .brklbl{display:none}
+  .row{grid-template-columns:40px minmax(0,1fr)}
+  .row .tm{grid-column:2;padding-top:0;order:-1}
+  .row .logo{grid-row:span 2}
+}
+@media (prefers-reduced-motion:no-preference){.org,.chip,.ev{transition:border-color .15s,background .15s}}
+
+.months{display:flex;flex-direction:column;gap:28px}
+.month h3{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 10px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><small>UT Dallas · Muslim &amp; Muslim‑adjacent orgs</small>Upcoming org events</h1>
+    </div>
+    <p class="meta" id="meta"></p>
+  </header>
+
+  <section aria-labelledby="orgs-h">
+    <div class="sechead">
+      <h2 id="orgs-h">Orgs checked</h2>
+      <p id="orgs-sum"></p>
+    </div>
+    <div class="groups" id="groups"></div>
+  </section>
+
+  <section aria-labelledby="cal-h">
+    <div class="sechead">
+      <h2 id="cal-h">Calendar</h2>
+      <div class="filters" id="filters" role="group" aria-label="Filter events"></div>
+    </div>
+    <div class="months" id="months"></div>
+  </section>
+
+  <section aria-labelledby="ag-h">
+    <div class="sechead"><h2 id="ag-h">Agenda</h2><p id="ag-sum"></p></div>
+    <div class="agenda" id="agenda"></div>
+  </section>
+
+  <p class="note">Recurring events not shown on every date: DeenDashers runs a weekly 1‑mile run, and MSA holds Quran Circles before Jumu'ah each Friday.</p>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgbody"></div></dialog>
+
+<script>
+const DATA={"orgs": [{"handle": "utdmsa", "name": "Muslim Student Association", "category": "faith"}, {"handle": "absa_utd", "name": "Ahlul‑Bayt Student Association", "category": "faith"}, {"handle": "rnr.utdallas", "name": "Recite & Reflect", "category": "faith"}, {"handle": "fam.utd", "name": "Faces of African Muslims", "category": "faith"}, {"handle": "1fautdallas", "name": "One For All", "category": "faith"}, {"handle": "deendashers", "name": "DeenDashers", "category": "faith"}, {"handle": "niyadallas", "name": "Niya Women's Wellness", "category": "faith"}, {"handle": "irutd", "name": "Islamic Relief UTD", "category": "service"}, {"handle": "utdicnarelief", "name": "ICNA Relief at UTD", "category": "service"}, {"handle": "nooralyateemutd", "name": "Noor Al‑Yateem", "category": "service"}, {"handle": "umrutd", "name": "UMR (United Missions)", "category": "service"}, {"handle": "gpfpatutd", "name": "Global Physicians for Peace", "category": "service"}, {"handle": "ihsanhealthcareutd", "name": "Ihsan Healthcare Association", "category": "pro"}, {"handle": "amwpa.utd", "name": "American Muslim Women Physician Assn.", "category": "pro"}, {"handle": "mp.utd", "name": "Muslim Professionals", "category": "pro"}, {"handle": "utdmib", "name": "Muslims in Business", "category": "pro"}, {"handle": "utdmuslimsinlaw", "name": "Muslims in Law", "category": "pro"}, {"handle": "khidmahutd", "name": "Khidmah", "category": "pro"}, {"handle": "era.utd", "name": "era", "category": "pro"}, {"handle": "pamautd", "name": "Palestinian American Medical Assn.", "category": "pro"}, {"handle": "empowherhealthutd", "name": "EmpowHer Health", "category": "pro"}, {"handle": "almutdallas", "name": "Alpha Lambda Mu", "category": "greek"}, {"handle": "kappadeltanu_", "name": "Kappa Delta Nu", "category": "greek"}, {"handle": "asautd", "name": "Arab Student Association", "category": "culture"}, {"handle": "psautd", "name": "Pakistani Students Association", "category": "culture"}, {"handle": "bsoutd", "name": "Bangladeshi Student Org", "category": "culture"}, {"handle": "dpautd", "name": "Dallas Persian Association", "category": "culture"}, {"handle": "iscutd", "name": "Iranian Student Community", "category": "culture"}, {"handle": "tsautd", "name": "Turkish Student Association", "category": "culture"}, {"handle": "esa.utd", "name": "Egyptian Student Association", "category": "culture"}, {"handle": "sea_utd", "name": "Students of East Africa", "category": "culture"}, {"handle": "cao_utd", "name": "Central Asian Organization", "category": "culture"}, {"handle": "ssa.at.utd", "name": "Saudi Students Club", "category": "culture"}, {"handle": "sos.utd", "name": "Students Organize for Syria", "category": "advocacy"}, {"handle": "tds_utd", "name": "The Dialogue Society", "category": "advocacy"}, {"handle": "kashmirutd", "name": "KHA (Kashmir)", "category": "advocacy"}, {"handle": "utd_smeer", "name": "SMEER", "category": "advocacy"}, {"handle": "sjp.dallas", "name": "Students for Justice in Palestine", "category": "advocacy"}, {"handle": "utd_divest", "name": "#UTDivest", "category": "advocacy"}], "events": [{"date": "2026-11-03", "time": "10 AM–5 PM", "sort": 10, "title": "Party to the Polls", "orgs": ["utdmsa", "psautd", "nooralyateemutd", "sos.utd", "era.utd", "ihsanhealthcareutd"], "where": "SU Green", "url": "https://www.instagram.com/utdmsa/p/DfQ5_0NuC4y/"}, {"date": "2026-11-03", "time": "11 AM–3 PM", "sort": 11, "title": "Fall cupcakes & hot chocolate", "orgs": ["amwpa.utd"], "where": "Outdoor SU Mall", "url": "https://www.instagram.com/amwpa.utd/p/DfQMsKnv_iS/"}, {"date": "2026-11-03", "time": "5:30 PM", "sort": 17.5, "title": "Pali Circles movie night", "orgs": ["sjp.dallas"], "where": "Location TBA", "url": "https://www.instagram.com/sjp.dallas/p/DfPRW42Jcu-/", "flags": ["unaff"]}, {"date": "2026-11-03", "time": "6:30 PM", "sort": 18.5, "title": "Tatreez Night", "orgs": ["irutd", "sos.utd"], "where": "FO 2nd‑floor Atrium", "notes": "$8, tatreez kit and Syrian food; proceeds to Syrian relief", "url": "https://www.instagram.com/sos.utd/p/DfAjlNas_Kr/"}, {"date": "2026-11-03", "time": "7 PM", "sort": 19, "title": "SQL Murder Mystery", "orgs": ["mp.utd"], "where": "SLC 2.303", "url": "https://www.instagram.com/mp.utd/p/DfJVaVwlsgI/"}, {"date": "2026-11-04", "time": "12–4 PM", "sort": 12, "title": "Treats & drinks fundraiser", "orgs": ["era.utd"], "where": "Plinth", "url": "https://www.instagram.com/era.utd/p/DfSSSJvA8sL/"}, {"date": "2026-11-04", "time": "5:30 PM", "sort": 17.5, "title": "Gratitude Miles: 1‑mile charity run", "orgs": ["deendashers"], "where": "Activity Center fitness courts", "notes": "Bring non‑perishables for IACC's food pantry", "url": "https://www.instagram.com/deendashers/p/DfSmHtjEdaE/"}, {"date": "2026-11-04", "time": "6 PM", "sort": 18, "title": "Speaker Night: The Pursuit of Acceptance", "orgs": ["fam.utd"], "where": "Galaxy Rooms", "notes": "With Ustadh Ziyad Asdi", "url": "https://www.instagram.com/fam.utd/p/DfIFB-BRZ4z/"}, {"date": "2026-11-04", "time": "7 PM", "sort": 19, "title": "Beyond the Prompt: AI workshop", "orgs": ["mp.utd"], "where": "FN 2.202", "url": "https://www.instagram.com/mp.utd/p/DfN5IW4AtPr/"}, {"date": "2026-11-05", "time": "", "sort": 9, "title": "Seerah Series", "orgs": ["utdmsa"], "where": "See MSA", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-05", "time": "5:30 PM", "sort": 17.5, "title": "Blanket Making", "orgs": ["nooralyateemutd"], "where": "AC Atrium", "url": "https://www.instagram.com/nooralyateemutd/p/DfNpk1Kh-DZ/"}, {"date": "2026-11-05", "time": "5:30–8 PM", "sort": 17.6, "title": "Medicine in Islam panel", "orgs": ["ihsanhealthcareutd"], "where": "Nueces Mosque, UT Austin", "url": "https://www.instagram.com/ihsanhealthcareutd/p/DfLn4vfDgOz/", "flags": ["off"]}, {"date": "2026-11-05", "time": "6 PM", "sort": 18, "title": "Political Prisoners Panel", "orgs": ["sjp.dallas"], "where": "Location TBA", "url": "https://www.instagram.com/sjp.dallas/p/DfSfkAqJPEf/", "flags": ["unaff"]}, {"date": "2026-11-05", "time": "7:30 PM", "sort": 19.5, "title": "Shark Tank Social", "orgs": ["era.utd"], "where": "ECSS 2.102", "url": "https://www.instagram.com/era.utd/p/DfH7G7rgtY5/"}, {"date": "2026-11-06", "time": "12 PM", "sort": 12, "title": "Lecture: Orientalism in Video Games", "orgs": ["utdcal"], "where": "ATC LED Wall (ATC 1.200)", "url": "https://calendar.utdallas.edu/event/sarah-slingluff-lecture"}, {"date": "2026-11-06", "time": "12–5 PM", "sort": 12.1, "title": "Matcha fundraiser", "orgs": ["sea_utd"], "where": "SU downstairs", "url": "https://www.instagram.com/sea_utd/p/DfP5-aJvVN7/"}, {"date": "2026-11-06", "time": "12:30 PM", "sort": 12.5, "title": "Quran Circles + Jumu'ah", "orgs": ["utdmsa"], "where": "SCI Courtyard", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-09", "time": "2:30–5:30 PM", "sort": 14.5, "title": "PSA Café fall lattes", "orgs": ["psautd"], "where": "Outdoor SU Mall, Booth F4", "url": "https://www.instagram.com/psautd/p/DfP6hR_BJMT/"}, {"date": "2026-11-09", "time": "6:15 PM", "sort": 18.25, "title": "Research 101", "orgs": ["ihsanhealthcareutd"], "where": "ATC 1.305", "url": "https://www.instagram.com/ihsanhealthcareutd/p/DfQtQhluQBJ/"}, {"date": "2026-11-10", "time": "6–7 PM", "sort": 18, "title": "Women in Islam", "orgs": ["utdmsa"], "where": "SLC 2.304", "notes": "Room request still pending in Ad Astra", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/", "flags": ["pend"]}, {"date": "2026-11-11", "time": "", "sort": 12, "title": "What Do We Live For?", "orgs": ["utdmsa"], "where": "See MSA", "notes": "Open conversation on faith, purpose and Islam", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-12", "time": "4 PM", "sort": 16, "title": "Talk: Early Medieval Sindh and its Artifacts", "orgs": ["utdcal"], "where": "Edith O'Donnell Institute (ATC 2.705E)", "notes": "Fatima Esmail", "url": "https://calendar.utdallas.edu/event/fatima-esmail-workshop-talk-reception"}, {"date": "2026-11-12", "time": "", "sort": 18, "title": "Fireside Chat", "orgs": ["utdmsa"], "where": "See MSA", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-13", "time": "12:30 PM", "sort": 12.5, "title": "Quran Circles + Jumu'ah", "orgs": ["utdmsa"], "where": "See MSA", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-14", "time": "", "sort": 10, "title": "MYLS 2026 youth legislative summit", "orgs": ["utdmuslimsinlaw"], "where": "MAS Islamic Center of Dallas", "notes": "Hosted by CAIR; shared by Muslims in Law", "url": "https://www.instagram.com/cairhouston/p/DeuO0kBAID3/", "flags": ["off"]}, {"date": "2026-11-14", "time": "6 PM", "sort": 18, "title": "Mock Mehndi", "orgs": ["psautd"], "where": "Multipurpose Field", "notes": "$15 pre‑sale", "url": "https://www.instagram.com/psautd/p/De7UiLhhSE9/"}, {"date": "2026-11-16", "time": "2–9 PM", "sort": 14, "title": "Multicultural Bazaar", "orgs": ["asautd"], "where": "Plinth", "url": "https://www.instagram.com/asautd/p/Der9OKiJFsc/"}, {"date": "2026-11-16", "time": "6–8:30 PM", "sort": 18, "title": "Seeking God in a Distracted World", "orgs": ["utdmsa", "cru"], "where": "Location TBD", "notes": "Interfaith dinner with Pastor Mike Westover and Ustad Moneeb Sarmad. RSVP required.", "url": "https://www.instagram.com/utdmsa/p/DfP8LIuAU1S/"}, {"date": "2026-11-17", "time": "6:30 PM", "sort": 18.5, "title": "Thanksgiving Dinner", "orgs": ["tds_utd"], "where": "FO 2nd‑floor Atrium", "url": "https://www.instagram.com/tds_utd/p/DfFgjwxJlD0/"}, {"date": "2026-11-19", "time": "", "sort": 18, "title": "MSA × ERA collab", "orgs": ["utdmsa", "era.utd"], "where": "See MSA", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-20", "time": "12:30 PM", "sort": 12.5, "title": "Quran Circles + Jumu'ah", "orgs": ["utdmsa"], "where": "See MSA", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}, {"date": "2026-11-20", "time": "5 PM", "sort": 17, "title": "Quran Night", "orgs": ["nooralyateemutd"], "where": "SSA Auditorium", "notes": "Dinner served. $10, or $7 for UTD students", "url": "https://www.instagram.com/nooralyateemutd/p/De2tJUimxQt/"}, {"date": "2026-11-20", "end": "2026-11-22", "time": "Nov 20–22", "sort": 20, "title": "Wellness Camping Retreat", "orgs": ["ihsanhealthcareutd"], "where": "Off campus (interest form)", "notes": "Ihsan × UMC", "url": "https://www.instagram.com/ihsanhealthcareutd/p/DefiJk5t2io/", "flags": ["off"]}, {"date": "2026-11-30", "time": "", "sort": 12, "title": "Revert Meetup", "orgs": ["utdmsa"], "where": "See MSA", "url": "https://www.instagram.com/utdmsa/p/DfOP74mufoi/"}], "breaks": [{"from": "2026-11-23", "to": "2026-11-27", "label": "Fall Break"}], "extraOrgs": {"utdcal": {"name": "UT Dallas (Comet Calendar)", "category": "academic"}, "cru": {"name": "Cru", "category": "faith"}}, "updated": "2026-11-03"};
+const CATS={faith:{n:"Faith & community",v:"--c-faith"},service:{n:"Service & relief",v:"--c-service"},pro:{n:"Professional & pre‑health",v:"--c-pro"},greek:{n:"Greek life",v:"--c-greek"},culture:{n:"Cultural",v:"--c-culture"},advocacy:{n:"Advocacy & dialogue",v:"--c-advocacy"},academic:{n:"Academic (university)",v:"--c-academic"}};
+const ORGS=DATA.orgs.map(o=>({h:o.handle,n:o.name,c:o.category}));
+const ORG=Object.fromEntries(ORGS.map(o=>[o.h,o]));
+for(const [h,o] of Object.entries(DATA.extraOrgs||{})) ORG[h]={h,n:o.name,c:o.category,noLogo:true};
+const LOGOS=DATA.logos||null;
+const FLAGS={off:"Off campus",unaff:"Not UTD‑affiliated",pend:"Booking pending"};
+const pd=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const now=new Date(); const TODAY=iso(now);
+const EV=DATA.events.filter(e=>(e.end||e.date)>=TODAY);
+const ORGFOR=h=>ORG[h]||{h,n:"@"+h,c:"faith",noLogo:true};
+const state={orgs:new Set(),hide:new Set()};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const catVar=c=>`var(${(CATS[c]||CATS.faith).v})`;
+function logo(h,cls="logo"){const o=ORGFOR(h); const ini=o.n.replace(/[^A-Za-z ]/g,"").split(" ").filter(Boolean).slice(0,2).map(w=>w[0]).join("");
+  const span=`<span class="${cls}" style="--cat:${catVar(o.c)}" aria-hidden="true">${ini}</span>`;
+  if(o.noLogo) return span;
+  const src=LOGOS?LOGOS[o.h]:`logos/${o.h}.jpg`; if(!src) return span;
+  return `<img class="${cls}" style="--cat:${catVar(o.c)}" src="${src}" alt="" loading="lazy" onerror="this.outerHTML=this.dataset.f" data-f="${esc(span)}">`;}
+const count=h=>EV.filter(e=>e.orgs.includes(h)).length;
+const days=e=>{if(!e.end) return [e.date]; const out=[]; for(let d=pd(e.date);iso(d)<=e.end;d.setDate(d.getDate()+1)) out.push(iso(d)); return out;};
+const inBreak=s=>(DATA.breaks||[]).find(b=>s>=b.from&&s<=b.to);
+function visible(e){
+  if(e.flags&&e.flags.some(f=>state.hide.has(f))) return false;
+  if(state.orgs.size && !e.orgs.some(h=>state.orgs.has(h))) return false;
+  return true;
+}
+function renderMeta(){
+  const u=pd(DATA.updated);
+  document.getElementById("meta").textContent=`Updated ${u.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})} from each org's Instagram, MSA's calendar, Ad Astra room bookings and the Comet Calendar. Refreshes daily. Times and rooms can change, so check the org's post before you go.`;
+}
+function renderOrgs(){
+  const g=document.getElementById("groups"); g.innerHTML="";
+  for(const [c,meta] of Object.entries(CATS)){
+    const list=ORGS.filter(o=>o.c===c); if(!list.length) continue;
+    const div=document.createElement("div"); div.className="grp"; div.style.setProperty("--cat",catVar(c));
+    div.innerHTML=`<h3><i></i>${meta.n}</h3><div class="roster"></div>`;
+    const r=div.querySelector(".roster");
+    for(const o of list){
+      const n=count(o.h); const b=document.createElement("button"); b.className="org"+(n?"":" dim"); b.type="button";
+      b.setAttribute("aria-pressed",state.orgs.has(o.h)); b.title=n?`Show only ${o.n}`:`${o.n}: no upcoming events posted`;
+      b.innerHTML=`${logo(o.h)}<span class="txt"><span class="nm">${esc(o.n)}</span><span class="hd">@${esc(o.h)}</span><span class="ct">${n?n+" event"+(n>1?"s":""):"nothing posted"}</span></span>`;
+      b.onclick=()=>{state.orgs.has(o.h)?state.orgs.delete(o.h):state.orgs.add(o.h); render();};
+      r.appendChild(b);
+    }
+    g.appendChild(div);
+  }
+  const active=ORGS.filter(o=>count(o.h)).length;
+  document.getElementById("orgs-sum").textContent=`${ORGS.length} accounts checked · ${active} with upcoming events · tap an org to filter`;
+}
+function renderFilters(){
+  const f=document.getElementById("filters"); f.innerHTML='<span class="lbl">Show</span>';
+  for(const [k,n] of Object.entries(FLAGS)){
+    if(!EV.some(e=>(e.flags||[]).includes(k))) continue;
+    const b=document.createElement("button"); b.className="chip"; b.type="button"; b.setAttribute("aria-pressed",!state.hide.has(k)); b.textContent=n;
+    b.onclick=()=>{state.hide.has(k)?state.hide.delete(k):state.hide.add(k); render();}; f.appendChild(b);
+  }
+  if(state.orgs.size){const c=document.createElement("button"); c.className="chip"; c.type="button"; c.textContent=`Clear org filter (${state.orgs.size})`; c.onclick=()=>{state.orgs.clear(); render();}; f.appendChild(c);}
+}
+function monthsToShow(){
+  const last=EV.reduce((m,e)=>(e.end||e.date)>m?(e.end||e.date):m,TODAY);
+  const out=[]; let d=new Date(now.getFullYear(),now.getMonth(),1); const L=pd(last);
+  while(d<=L && out.length<4){out.push(new Date(d)); d=new Date(d.getFullYear(),d.getMonth()+1,1);}
+  return out;
+}
+function renderMonths(){
+  const wrap=document.getElementById("months"); wrap.innerHTML="";
+  for(const m of monthsToShow()){
+    const sec=document.createElement("div"); sec.className="month";
+    sec.innerHTML=`<h3>${m.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</h3><div class="cal"><div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div><div class="grid"></div></div>`;
+    const g=sec.querySelector(".grid");
+    const start=new Date(m); start.setDate(1-m.getDay());
+    const weeks=Math.ceil((m.getDay()+new Date(m.getFullYear(),m.getMonth()+1,0).getDate())/7);
+    for(let i=0;i<weeks*7;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i); const s=iso(d);
+      const cell=document.createElement("div"); cell.className="day";
+      if(d.getMonth()!==m.getMonth()){cell.classList.add("out"); cell.innerHTML=`<div class="n"><span>${d.getDate()}</span></div>`; g.appendChild(cell); continue;}
+      const br=inBreak(s);
+      if(s<TODAY) cell.classList.add("past"); if(s===TODAY) cell.classList.add("today"); if(br) cell.classList.add("brk");
+      cell.innerHTML=`<div class="n"><b>${d.getDate()}</b>${br?`<span class="brklbl">${esc(br.label)}</span>`:""}</div>`;
+      const evs=EV.filter(e=>days(e).includes(s)&&visible(e)).sort((a,b)=>a.sort-b.sort);
+      for(const e of evs){
+        const o=ORGFOR(e.orgs[0]); const b=document.createElement("button"); b.type="button"; b.className="ev"+(e.flags?" flag":""); b.style.setProperty("--cat",catVar(o.c));
+        b.innerHTML=`${logo(o.h,"mini")}<span>${e.time?`<em class="t">${esc(e.time)}</em>`:""}${esc(e.title)}</span>`;
+        b.setAttribute("aria-label",`${e.title}, ${o.n}, ${s}`);
+        b.onclick=()=>openEv(e); cell.appendChild(b);
+      }
+      g.appendChild(cell);
+    }
+    wrap.appendChild(sec);
+  }
+}
+function renderAgenda(){
+  const a=document.getElementById("agenda"); a.innerHTML="";
+  const ds=[...new Set(EV.map(e=>e.date))].sort(); let total=0;
+  for(const s of ds){
+    const evs=EV.filter(e=>e.date===s&&visible(e)).sort((x,y)=>x.sort-y.sort); if(!evs.length) continue; total+=evs.length;
+    const label=pd(s).toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});
+    const sec=document.createElement("div"); sec.className="aday";
+    sec.innerHTML=`<h3>${label}${s===TODAY?" <em>today</em>":""}</h3>`;
+    for(const e of evs){
+      const o=ORGFOR(e.orgs[0]); const by=e.orgs.map(h=>ORGFOR(h).n).join(" × ");
+      const tags=(e.flags||[]).map(f=>`<span class="tag warn">${FLAGS[f]||f}</span>`).join("")+`<span class="tag" style="background:color-mix(in srgb,${catVar(o.c)} 14%,var(--surface));color:${catVar(o.c)}">${(CATS[o.c]||CATS.faith).n}</span>`;
+      const row=document.createElement("div"); row.className="row";
+      row.innerHTML=`<div class="tm">${esc(e.time||"Time TBA")}</div>${logo(o.h)}<div style="min-width:0"><div class="ti">${esc(e.title)}</div><div class="by">${esc(by)}</div><div class="wh">${esc(e.where)}${e.notes?" · "+esc(e.notes):""}</div><div class="tags">${tags}${e.url?` <a href="${esc(e.url)}" target="_blank" rel="noopener">View post ↗</a>`:""}</div></div>`;
+      sec.appendChild(row);
+    }
+    a.appendChild(sec);
+  }
+  if(!total) a.innerHTML='<p class="empty">No events match these filters. Clear the org filter or turn the tags back on.</p>';
+  document.getElementById("ag-sum").textContent=`${total} event${total===1?"":"s"} shown`;
+}
+function openEv(e){
+  const o=ORGFOR(e.orgs[0]);
+  const when=pd(e.date).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+  document.getElementById("dlgbody").innerHTML=`<div class="hdr">${logo(o.h)}<div><h4>${esc(e.title)}</h4><div style="color:var(--muted);font-size:13px">${esc(e.orgs.map(h=>ORGFOR(h).n).join(" × "))}</div></div></div>
+   <dl><dt>When</dt><dd>${when}${e.time?", "+esc(e.time):""}</dd><dt>Where</dt><dd>${esc(e.where)}</dd>${e.notes?`<dt>Notes</dt><dd>${esc(e.notes)}</dd>`:""}${e.flags?`<dt>Flag</dt><dd>${e.flags.map(f=>FLAGS[f]||f).join(", ")}</dd>`:""}</dl>
+   <div class="acts">${e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener">Open source post ↗</a>`:"<span></span>"}<button class="btn" type="button" id="dlgclose">Close</button></div>`;
+  const dlg=document.getElementById("dlg"); dlg.showModal(); document.getElementById("dlgclose").onclick=()=>dlg.close();
+}
+document.getElementById("dlg").addEventListener("click",ev=>{if(ev.target.id==="dlg") ev.target.close();});
+function render(){renderMeta();renderOrgs();renderFilters();renderMonths();renderAgenda();}
+render();
+</script>
+
+</body>
+</html>
